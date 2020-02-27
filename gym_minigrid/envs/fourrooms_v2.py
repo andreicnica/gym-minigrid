@@ -12,7 +12,7 @@ class FourRoomsEnv2(MiniGridEnv):
     Can specify agent and goal position, if not it set at random.
     """
 
-    def __init__(self, agent_pos=None, goal_pos=(13, 13), rem=9, doors=True, goal_rand_offset=0,
+    def __init__(self, agent_pos=None, goal_pos=(17, 17), rem=9, doors=True, goal_rand_offset=0,
                  grid_size=19):
         rem = 9-rem
         self.goal_rand_offset = goal_rand_offset
