@@ -444,6 +444,7 @@ class Grid:
         cls,
         obj,
         agent_dir=None,
+        carrying=None,
         highlight=False,
         tile_size=TILE_PIXELS,
         subdivs=3
@@ -453,7 +454,7 @@ class Grid:
         """
 
         # Hash map lookup key for the cache
-        key = (agent_dir, highlight, tile_size)
+        key = (agent_dir, highlight, tile_size, carrying)
         key = obj.encode() + key if obj else key
 
         if key in cls.tile_cache:
@@ -467,6 +468,9 @@ class Grid:
 
         if obj != None:
             obj.render(img)
+
+        if carrying != None:
+            carrying.render(img)
 
         # Overlay the agent on top
         if agent_dir is not None:
@@ -497,6 +501,7 @@ class Grid:
         tile_size,
         agent_pos=None,
         agent_dir=None,
+        carrying=None,
         highlight_mask=None
     ):
         """
@@ -520,9 +525,11 @@ class Grid:
                 cell = self.get(i, j)
 
                 agent_here = np.array_equal(agent_pos, (i, j))
+
                 tile_img = Grid.render_tile(
                     cell,
                     agent_dir=agent_dir if agent_here else None,
+                    carrying=carrying if agent_here else None,
                     highlight=highlight_mask[i, j],
                     tile_size=tile_size
                 )
@@ -1276,6 +1283,7 @@ class MiniGridEnv(gym.Env):
             tile_size,
             self.agent_pos,
             self.agent_dir,
+            self.carrying,
             highlight_mask=highlight_mask if highlight else None
         )
 
