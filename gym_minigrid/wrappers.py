@@ -29,6 +29,7 @@ class ReseedWrapper(gym.core.Wrapper):
         obs, reward, done, info = self.env.step(action)
         return obs, reward, done, info
 
+
 class ActionBonus(gym.core.Wrapper):
     """
     Wrapper which adds an exploration bonus.
@@ -236,9 +237,11 @@ class FullyObsWrapper(gym.core.ObservationWrapper):
     def observation(self, obs):
         env = self.unwrapped
         full_grid = env.grid.encode()
+
+        carrying = 0 if env.carrying is None else OBJECT_TO_IDX[env.carrying.type]
         full_grid[env.agent_pos[0]][env.agent_pos[1]] = np.array([
             OBJECT_TO_IDX['agent'],
-            COLOR_TO_IDX['red'],
+            carrying,
             env.agent_dir
         ])
 
