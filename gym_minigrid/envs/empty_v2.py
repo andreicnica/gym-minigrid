@@ -57,7 +57,10 @@ class EmptyEnvV2(MiniGridEnv):
             goal.init_pos, goal.cur_pos = goal_pos
         else:
             # Place a goal square in the bottom-right corner
-            self.put_obj(Goal(), width - 2, height - 2)
+            goal_pos = [width - 2, height - 2]
+            self.put_obj(Goal(), *goal_pos)
+
+        self.unwrapped._crt_goal_pos = goal_pos
 
         # Place the agent
         if self.agent_start_pos is not None:
@@ -148,7 +151,10 @@ class EmptyOODEnvV0(MiniGridEnv):
             goal.init_pos, goal.cur_pos = goal_pos
         else:
             # Place a goal square in the bottom-right corner
-            self.put_obj(Goal(), width - 2, height - 2)
+            goal_pos = [width - 2, height - 2]
+            self.put_obj(Goal(), *goal_pos)
+
+        self.unwrapped._crt_goal_pos = goal_pos
 
         # Place the agent
         if self.agent_start_pos is not None:
@@ -242,7 +248,10 @@ class EmptyOODEnvV1(MiniGridEnv):
             goal.init_pos, goal.cur_pos = goal_pos
         else:
             # Place a goal square in the bottom-right corner
-            self.put_obj(Goal(), width - 2, height - 2)
+            goal_pos = [width - 2, height - 2]
+            self.put_obj(Goal(), *goal_pos)
+
+        self.unwrapped._crt_goal_pos = goal_pos
 
         # Place the agent
         if self.agent_start_pos is not None:
