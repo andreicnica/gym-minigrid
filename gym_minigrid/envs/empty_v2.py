@@ -184,7 +184,8 @@ class EmptyOODEnvV1(MiniGridEnv):
         goal_rand_offset=0,
         max_offset=3,
         train=True,
-        rand_generator=123
+        rand_generator=123,
+        split=None
     ):
         self.agent_start_pos = agent_pos
         self.agent_start_dir = None if agent_dir is None else np.clip(agent_dir, 0, 4)
@@ -199,14 +200,18 @@ class EmptyOODEnvV1(MiniGridEnv):
         goal_pos_pos[:, 1] += goal_pos[1]
 
         # Filter out unavailable positions
-        fff = np.all((goal_pos_pos >= 1) & (goal_pos_pos < size), axis=1)
+        fff = np.all((goal_pos_pos >= 1) & (goal_pos_pos < (size - 1)), axis=1)
         goal_pos_pos = goal_pos_pos[fff]
         goal_pos_pos = goal_pos_pos[(goal_pos_pos != np.array([1, 1])).any(axis=1)]
 
         np.random.RandomState(rand_generator).shuffle(goal_pos_pos)
         gw = goal_rand_offset * 2 + 1
         gw2 = (goal_rand_offset + 1) * 2 + 1
-        train_split = (gw**2) / float(gw2**2)
+
+        if split is None:
+            train_split = (gw**2) / float(gw2**2)
+        else:
+            train_split = split
 
         self.train_split = train_split
 
