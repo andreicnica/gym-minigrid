@@ -11,7 +11,7 @@ class EmptyEnvV2(MiniGridEnv):
     def __init__(
         self,
         size=16,
-        agent_pos=(1, 1),
+        agent_pos=None, #(1, 1),
         agent_dir=None,
         goal_pos=(8, 8),
         goal_rand_offset=0,
@@ -76,6 +76,19 @@ class EmptyEnvV2(MiniGridEnv):
         self.mission = "get to the green goal square"
 
 
+def get_goal_pos(goal_pos, size, max_offset):
+    goal_pos_pos = np.array(list(itertools.product(range(-max_offset, max_offset + 1),
+                                                   range(-max_offset, max_offset + 1))))
+    goal_pos_pos[:, 0] += goal_pos[0]
+    goal_pos_pos[:, 1] += goal_pos[1]
+
+    # Filter out unavailable positions
+    fff = np.all((goal_pos_pos >= 1) & (goal_pos_pos < (size - 1)), axis=1)
+    goal_pos_pos = goal_pos_pos[fff]
+    goal_pos_pos = goal_pos_pos[(goal_pos_pos != np.array([1, 1])).any(axis=1)]
+    return goal_pos_pos
+
+
 class EmptyOODEnvV0(MiniGridEnv):
     """
     Empty grid environment, no obstacles, sparse reward
@@ -107,6 +120,7 @@ class EmptyOODEnvV0(MiniGridEnv):
         fff = np.all((test_goals >= 1) & (test_goals < size), axis=1)
         test_goals = test_goals[fff]
         self.test_goals = test_goals[(test_goals != np.array([1, 1])).any(axis=1)]
+        self.train_goals = get_goal_pos(goal_pos, size, goal_rand_offset)
 
         super().__init__(
             grid_size=size,
@@ -132,11 +146,12 @@ class EmptyOODEnvV0(MiniGridEnv):
                 new_goal_pos = (1, 1)
                 while new_goal_pos == (1, 1):
                     if train:
-                        offx = np.random.randint(-rnd_off, rnd_off + 1)
-                        offy = np.random.randint(-rnd_off, rnd_off + 1)
-                        offx = np.clip(goal_pos[0] + offx, 1, width - 2)
-                        offy = np.clip(goal_pos[1] + offy, 1, height - 2)
-                        new_goal_pos = (offx, offy)
+                        eval_id = self.unwrapped.eval_id
+                        if eval_id is None:
+                            new_goal_pos = self.train_goals[
+                                np.random.randint(len(self.train_goals))].tolist()
+                        else:
+                            new_goal_pos = self.train_goals[eval_id].tolist()
                     else:
                         eval_id = self.unwrapped.eval_id
                         if eval_id is None:
@@ -240,7 +255,13 @@ class EmptyOODEnvV1(MiniGridEnv):
 
             if rnd_off is not None:
                 if self.unwrapped.train:
-                    goal_pos = self.train_goals[np.random.randint(len(self.train_goals))].tolist()
+                    eval_id = self.unwrapped.eval_id
+
+                    if eval_id is None:
+                        goal_pos = self.train_goals[np.random.randint(len(self.train_goals))].tolist()
+                    else:
+                        goal_pos = self.train_goals[eval_id].tolist()
+
                 else:
                     eval_id = self.unwrapped.eval_id
 
