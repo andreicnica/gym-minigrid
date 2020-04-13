@@ -29,6 +29,7 @@ Please use this bibtex if you want to cite this repository in your publications:
 ```
 
 List of publications & submissions using MiniGrid or BabyAI (please open a pull request to add missing entries):
+- [RIDE: Rewarding Impact-Driven Exploration for Procedurally-Generated Environments](https://openreview.net/forum?id=rkg-TJBFPB) (FAIR, ICLR 2020)
 - [Learning to Request Guidance in Emergent Communication](https://arxiv.org/pdf/1912.05525.pdf) (University of Amsterdam, Dec 2019)
 - [Working Memory Graphs](https://arxiv.org/abs/1911.07141) (MSR, Nov 2019)
 - [Fast Task-Adaptation for Tasks Labeled Using
@@ -47,7 +48,6 @@ of Information-Constrained Primitives](https://arxiv.org/abs/1906.10667) (Mila, 
 - [Variational State Encoding as Intrinsic Motivation in Reinforcement Learning](https://mila.quebec/wp-content/uploads/2019/05/WebPage.pdf) (Mila, TARL 2019)
 - [Unsupervised Discovery of Decision States Through Intrinsic Control](https://tarl2019.github.io/assets/papers/modhe2019unsupervised.pdf) (Georgia Tech, TARL 2019)
 - [Modeling the Long Term Future in Model-Based Reinforcement Learning](https://openreview.net/forum?id=SkgQBn0cF7) (Mila, ICLR 2019)
-- [Practical Open-Loop Optimistic Planning](https://arxiv.org/pdf/1904.04700.pdf) (INRIA, Apr 2019)
 - [Unifying Ensemble Methods for Q-learning via Social Choice Theory](https://arxiv.org/pdf/1902.10646.pdf) (Max Planck Institute, Feb 2019)
 - [Planning Beyond The Sensing Horizon Using a Learned Context](https://personalrobotics.cs.washington.edu/workshops/mlmp2018/assets/docs/18_CameraReadySubmission.pdf) (MLMP@IROS, 2018)
 - [Guiding Policies with Language via Meta-Learning](https://arxiv.org/abs/1811.07882) (UC Berkeley, Nov 2018)
@@ -82,10 +82,10 @@ There is a UI application which allows you to manually control the agent with th
 ./manual_control.py
 ```
 
-The environment being run can be selected with the `--env_name` option, eg:
+The environment being run can be selected with the `--env` option, eg:
 
 ```
-./manual_control.py --env_name MiniGrid-Empty-8x8-v0
+./manual_control.py --env MiniGrid-Empty-8x8-v0
 ```
 
 ## Reinforcement Learning
