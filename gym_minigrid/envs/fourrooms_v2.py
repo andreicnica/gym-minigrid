@@ -23,6 +23,8 @@ class FourRoomsEnv2(MiniGridEnv):
         assert 0<= rem <= 9, f"bad rem {rem}"
         self.rem=rem
         self.actual_size = grid_size
+        self.room_size = (grid_size-1) // 2
+
         super().__init__(grid_size=grid_size - rem, max_steps=100)
 
     def _gen_grid(self, width, height):
@@ -71,15 +73,16 @@ class FourRoomsEnv2(MiniGridEnv):
             self.place_agent()
 
         if self._goal_default_pos is not None:
-            goal = Goal()
-            goal_pos = self._goal_default_pos
-            if self.goal_rand_offset > 0:
-                offx = np.random.randint(-self.goal_rand_offset, self.goal_rand_offset+1)
-                offy = np.random.randint(-self.goal_rand_offset, self.goal_rand_offset+1)
-                goal_pos = (self._goal_default_pos[0] + offx, self._goal_default_pos[1] + offy)
+            if self._goal_default_pos[0] > 0:
+                goal = Goal()
+                goal_pos = self._goal_default_pos
+                if self.goal_rand_offset > 0:
+                    offx = np.random.randint(-self.goal_rand_offset, self.goal_rand_offset+1)
+                    offy = np.random.randint(-self.goal_rand_offset, self.goal_rand_offset+1)
+                    goal_pos = (self._goal_default_pos[0] + offx, self._goal_default_pos[1] + offy)
 
-            self.put_obj(goal, *goal_pos)
-            goal.init_pos, goal.cur_pos = goal_pos
+                self.put_obj(goal, *goal_pos)
+                goal.init_pos, goal.cur_pos = goal_pos
         else:
             self.place_obj(Goal())
 
