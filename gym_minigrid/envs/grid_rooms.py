@@ -106,10 +106,30 @@ class GridRooms(RoomGrid):
 
     def step(self, action):
         obs, reward, done, info = MiniGridEnv.step(self, action)
-        print(self.agent_pos)
         return obs, reward, done, info
+
+
+class GridRooms4(GridRooms):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, num_cols=2, num_rows=2, **kwargs)
+
+
+class GridRooms9(GridRooms):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, num_cols=3, num_rows=3, **kwargs)
+
 
 register(
     id="MiniGrid-GridRooms-v0",
     entry_point="gym_minigrid.envs:GridRooms"
+)
+
+register(
+    id="MiniGrid-GridRooms4-v0",
+    entry_point="gym_minigrid.envs:GridRooms4"
+)
+
+register(
+    id="MiniGrid-GridRooms9-v0",
+    entry_point="gym_minigrid.envs:GridRooms9"
 )
