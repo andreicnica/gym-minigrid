@@ -380,7 +380,7 @@ class ConstantReward(gym.core.Wrapper):
         return 1
 
 
-class JustMove(gym.core.Wrapper):
+class FreeMove(gym.core.Wrapper):
     """ @andrei """
     _move_actions = np.array([
         [-1, 0],
