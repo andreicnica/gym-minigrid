@@ -76,9 +76,12 @@ class BlockedUnlockPickupV2(RoomGrid):
         door, door_pos = self.add_door(0, 0, 0, locked=True)
         # Open door
         door.is_open = self._rand_int(0, 2) == 0
+        self.unwrapped.door = door
 
         # Block the door with a ball
         color = self._rand_color()
+
+        self.unwrapped.blocked_pos = door_pos[0]-1, door_pos[1]
 
         # 50% blocked door by Ball
         if self._rand_int(0, 2) == 0:
