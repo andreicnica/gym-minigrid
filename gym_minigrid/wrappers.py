@@ -355,4 +355,78 @@ class DirectionObsWrapper(gym.core.ObservationWrapper):
         slope = np.divide( self.goal_position[1] - self.agent_pos[1] ,  self.goal_position[0] - self.agent_pos[0]) 
         obs['goal_direction'] = np.arctan( slope ) if self.type == 'angle' else slope
         return obs
-        
+
+
+class ConstantReward(gym.core.Wrapper):
+    """ @andrei """
+    def __init__(self, env):
+        super().__init__(env)
+        self.env._reward = self._reward
+        self.unwrapped._reward = self._reward
+
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        if done:
+            env = self.unwrapped
+            dis_r = (1 - 0.9 * (env.step_count / env.max_steps)) * (env.step_count != env.max_steps)
+            if info is None:
+                info = dict({"discounted_r": dis_r})
+            else:
+                info["discounted_r"] = dis_r
+            info["goal_pos"] = env._crt_goal_pos
+        return obs, reward, done, info
+
+    def _reward(self):
+        return 1
+
+
+class JustMove(gym.core.Wrapper):
+    """ @andrei """
+    _move_actions = np.array([
+        [-1, 0],
+        [0, -1],
+        [1, 0],
+        [0, 1],
+    ])
+    _move_actions_list = _move_actions.tolist()
+
+    def __init__(self, env):
+        super().__init__(env)
+
+    def step(self, action):
+        env = self.unwrapped
+        env.step_count += 1
+
+        reward = 0
+        done = False
+
+        if self.unwrapped.eval_id is not None:
+            goal_pos = self.unwrapped._crt_goal_pos
+            ag_pos = self.agent_pos
+            dist = [goal_pos[0]-ag_pos[0], goal_pos[1]-ag_pos[1]]
+            if dist in self._move_actions_list:
+                action = self._move_actions_list.index(dist)
+
+        # Move action
+        if 0 <= action < 4:
+            # Get the new possible position for the action
+            fwd_pos = self.agent_pos + self._move_actions[action]
+
+            # Get the contents of the cell in front of the agent
+            fwd_cell = env.grid.get(*fwd_pos)
+
+            if fwd_cell == None or fwd_cell.can_overlap():
+                env.agent_pos = fwd_pos
+            if fwd_cell != None and fwd_cell.type == 'goal':
+                done = True
+                reward = env._reward()
+            if fwd_cell != None and fwd_cell.type == 'lava':
+                done = True
+
+        if env.step_count >= env.max_steps:
+            done = True
+
+        obs = env.gen_obs()
+        info = {}
+
+        return obs, reward, done, info
