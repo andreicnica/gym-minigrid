@@ -1,6 +1,9 @@
 from gym_minigrid.minigrid import *
 from gym_minigrid.register import register
 import itertools
+from gym.envs.registration import register as gym_register
+
+from gym_minigrid.wrappers import FreeMove, ConstantReward, FullyObsWrapper
 
 
 class EmptyEnvV2(MiniGridEnv):
@@ -11,7 +14,7 @@ class EmptyEnvV2(MiniGridEnv):
     def __init__(
         self,
         size=16,
-        agent_pos=None, #(1, 1),
+        agent_pos=(1, 1),
         agent_dir=None,
         goal_pos=(8, 8),
         goal_rand_offset=0,
@@ -309,3 +312,21 @@ register(
     id='MiniGrid-EmptyOOD-v1',
     entry_point='gym_minigrid.envs:EmptyOODEnvV1'
 )
+
+
+def e16xn(offset=0):
+    env = EmptyEnvV2(size=16, agent_pos=(1, 1), agent_dir=None, goal_pos=(8, 8), train=True,
+                     goal_rand_offset=offset)
+    env = FreeMove(env)
+    env = ConstantReward(env)
+    env = FullyObsWrapper(env)
+    return env
+
+
+register('MiniGrid-EmptyX0-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 0})
+register('MiniGrid-EmptyX1-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 1})
+register('MiniGrid-EmptyX2-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 2})
+register('MiniGrid-EmptyX3-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 3})
+register('MiniGrid-EmptyX4-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 4})
+register('MiniGrid-EmptyX5-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 5})
+register('MiniGrid-EmptyX6-v2', entry_point='gym_minigrid.envs:e16xn', kwargs={'offset': 6})

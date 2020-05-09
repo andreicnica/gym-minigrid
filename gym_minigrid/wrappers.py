@@ -400,12 +400,12 @@ class FreeMove(gym.core.Wrapper):
         reward = 0
         done = False
 
-        if self.unwrapped.eval_id is not None:
-            goal_pos = self.unwrapped._crt_goal_pos
-            ag_pos = self.agent_pos
-            dist = [goal_pos[0]-ag_pos[0], goal_pos[1]-ag_pos[1]]
-            if dist in self._move_actions_list:
-                action = self._move_actions_list.index(dist)
+        # if self.unwrapped.eval_id is not None:
+        #     goal_pos = self.unwrapped._crt_goal_pos
+        #     ag_pos = self.agent_pos
+        #     dist = [goal_pos[0]-ag_pos[0], goal_pos[1]-ag_pos[1]]
+        #     if dist in self._move_actions_list:
+        #         action = self._move_actions_list.index(dist)
 
         # Move action
         if 0 <= action < 4:
