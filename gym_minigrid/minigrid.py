@@ -1160,6 +1160,12 @@ class MiniGridEnv(gym.Env):
 
         return obs, reward, done, {}
 
+    def _get_done(self):
+        done = False
+        if self.step_count >= self.max_steps:
+            done = True
+        return done
+
     def gen_obs_grid(self):
         """
         Generate the sub-grid observed by the agent.

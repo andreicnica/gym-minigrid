@@ -55,6 +55,7 @@ class EmptySeqEnvV0(MiniGridEnv):
 
         np.random.RandomState(rand_generator).shuffle(goal_poss)
 
+        self._crt_ep_step = 0
         self._crt_step = 0
         self._crt_goal_batch = None
         self._crt_goal_batch_idx = 0
@@ -76,12 +77,20 @@ class EmptySeqEnvV0(MiniGridEnv):
             see_through_walls=True
         )
 
+    @property
+    def step_count(self):
+        return self._crt_ep_step
+
+    @step_count.setter
+    def step_count(self, value):
+        self._crt_step += 1
+        self._crt_ep_step = value
+
     def next_batch(self):
         train_goals = self.train_goals
         batch_size = self.batch_size
         self._crt_goal_batch_idx = (self._crt_goal_batch_idx + batch_size) % len(train_goals)
         btch_start_idx = self._crt_goal_batch_idx
-
         if btch_start_idx + batch_size > len(train_goals):
             rest = (btch_start_idx + batch_size) % len(train_goals)
             goals_batch = np.concatenate([train_goals[btch_start_idx:], train_goals[:rest]])
@@ -140,13 +149,23 @@ class EmptySeqEnvV0(MiniGridEnv):
     def step(self, action):
         obs, reward, done, info = super().step(action)
 
-        self._crt_step += 1
         if self._crt_step % self.switch_steps == 0:
             self.next_batch()
             done = True
 
         return obs, reward, done, info
 
+    def _get_done(self):
+        done = False
+
+        if self.step_count >= self.max_steps:
+            done = True
+
+        if self._crt_step % self.switch_steps == 0:
+            self.next_batch()
+            done = True
+
+        return done
 
 register(
     id='MiniGrid-EmptySeq-v0',
