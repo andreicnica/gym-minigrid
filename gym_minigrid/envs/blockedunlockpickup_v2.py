@@ -12,7 +12,7 @@ class BlockedUnlockPickupV2(RoomGrid):
     in another room
     """
 
-    def __init__(self, seed=None, full_task=False, with_reward=False):
+    def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=1):
         room_size = 6
         self.full_task = full_task
         self._randPos = self._rand_pos
@@ -20,7 +20,7 @@ class BlockedUnlockPickupV2(RoomGrid):
         self._with_reward = with_reward
 
         super().__init__(
-            num_rows=1,
+            num_rows=num_rows,
             num_cols=2,
             room_size=room_size,
             max_steps=16*room_size**2,
@@ -152,6 +152,9 @@ class BlockedUnlockPickupV2(RoomGrid):
         obj, _ = self.add_object(1, 0, kind="box")
         # Make sure the two rooms are directly connected by a locked door
         door, pos = self.add_door(0, 0, 0, locked=True)
+        self.unwrapped.door = door
+        self.unwrapped.blocked_pos = pos[0]-1, pos[1]
+
         # Block the door with a ball
         color = self._rand_color()
         self.grid.set(pos[0]-1, pos[1], Ball(color))
