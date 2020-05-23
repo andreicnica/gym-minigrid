@@ -12,12 +12,14 @@ class BlockedUnlockPickupV2(RoomGrid):
     in another room
     """
 
-    def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=1):
+    def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=1,
+                 reward_ball=False):
         room_size = 6
         self.full_task = full_task
         self._randPos = self._rand_pos
         self._carrying = None
         self._with_reward = with_reward
+        self._reward_ball = reward_ball
 
         super().__init__(
             num_rows=num_rows,
@@ -84,12 +86,14 @@ class BlockedUnlockPickupV2(RoomGrid):
         self.unwrapped.blocked_pos = door_pos[0]-1, door_pos[1]
 
         # 50% blocked door by Ball
+        the_ball = None
         if self._rand_int(0, 2) == 0:
             ball_pos = door_pos[0]-1, door_pos[1]
-            self.grid.set(door_pos[0]-1, door_pos[1], Ball(color))
+            the_ball = Ball(color)
+            self.grid.set(door_pos[0]-1, door_pos[1], the_ball)
             blocked = True
         else:
-            _, ball_pos = self.add_object(self._rand_int(0, 2), 0, 'ball', color)
+            the_ball, ball_pos = self.add_object(self._rand_int(0, 2), 0, 'ball', color)
             blocked = False
 
         # Place agent
@@ -144,7 +148,7 @@ class BlockedUnlockPickupV2(RoomGrid):
 
                     not_placed = False
 
-        self.obj = obj
+        self.obj = obj if not self._reward_ball else the_ball
         self.mission = "pick up the %s %s" % (obj.color, obj.type)
 
     def _full_task_gen_grid(self, ):
@@ -157,13 +161,14 @@ class BlockedUnlockPickupV2(RoomGrid):
 
         # Block the door with a ball
         color = self._rand_color()
-        self.grid.set(pos[0]-1, pos[1], Ball(color))
+        the_ball = Ball(color)
+        self.grid.set(pos[0]-1, pos[1], the_ball)
         # Add a key to unlock the door
         self.add_object(0, 0, 'key', door.color)
 
         self.place_agent(0, 0)
 
-        self.obj = obj
+        self.obj = obj if not self._reward_ball else the_ball
         self.mission = "pick up the %s %s" % (obj.color, obj.type)
 
     def step(self, action):
