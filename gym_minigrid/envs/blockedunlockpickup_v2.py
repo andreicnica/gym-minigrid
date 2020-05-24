@@ -13,7 +13,7 @@ class BlockedUnlockPickupV2(RoomGrid):
     """
 
     def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=1,
-                 reward_ball=False):
+                 reward_ball=False, see_through_walls=True, agent_view_size=7):
         room_size = 6
         self.full_task = full_task
         self._randPos = self._rand_pos
@@ -26,8 +26,17 @@ class BlockedUnlockPickupV2(RoomGrid):
             num_cols=2,
             room_size=room_size,
             max_steps=16*room_size**2,
-            seed=seed
+            seed=seed,
         )
+        self.see_through_walls = see_through_walls
+        self.agent_view_size = agent_view_size
+        self.observation_space.spaces["image"] = spaces.Box(
+            low=0,
+            high=255,
+            shape=(agent_view_size, agent_view_size, 3),
+            dtype='uint8'
+        )
+
 
     def _gen_grid(self, width, height):
         super()._gen_grid(width, height)
@@ -182,7 +191,83 @@ class BlockedUnlockPickupV2(RoomGrid):
 
         return obs, reward, done, info
 
+
+class BlockedUnlockPickupEGOV3(BlockedUnlockPickupV2):
+    """
+    Unlock a door blocked by a ball, then pick up a box
+    in another room
+    """
+
+    def __init__(self, *args, agent_view_size=17, **kwargs):
+        super().__init__(*args, agent_view_size=agent_view_size, **kwargs)
+
+    def get_view_exts(self):
+        topY = self.agent_pos[1] - self.agent_view_size // 2
+        topX = self.agent_pos[0] - self.agent_view_size // 2
+        botX = topX + self.agent_view_size
+        botY = topY + self.agent_view_size
+
+        return (topX, topY, botX, botY)
+
+    def gen_obs_grid(self):
+        """
+        Generate the sub-grid observed by the agent.
+        This method also outputs a visibility mask telling us which grid
+        cells the agent can actually see.
+        """
+
+        topX, topY, botX, botY = self.get_view_exts()
+
+        grid = self.grid.slice(topX, topY, self.agent_view_size, self.agent_view_size)
+
+        for i in range(self.agent_dir + 1):
+            grid = grid.rotate_left()
+
+        # Process occluders and visibility
+        # Note that this incurs some performance cost
+        if not self.see_through_walls:
+            vis_mask = grid.process_vis(agent_pos=(self.agent_view_size // 2 ,
+                                                   self.agent_view_size // 2))
+        else:
+            vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
+
+        # Make it so the agent sees what it's carrying
+        # We do this by placing the carried object at the agent's position
+        # in the agent's partially observable view
+        agent_pos = grid.width // 2, grid.height // 2
+        if self.carrying:
+            grid.set(*agent_pos, self.carrying)
+        else:
+            grid.set(*agent_pos, None)
+
+        return grid, vis_mask
+
+    def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
+        """
+        Render an agent observation for visualization
+        """
+
+        grid, vis_mask = Grid.decode(obs)
+        vis_mask.fill(True)
+
+        # Render the whole grid
+        img = grid.render(
+            tile_size,
+            agent_pos=(self.agent_view_size // 2, self.agent_view_size // 2),
+            agent_dir=3,
+            highlight_mask=vis_mask
+        )
+
+        return img
+
+
 register(
     id='MiniGrid-BlockedUnlockPickup-v2',
     entry_point='gym_minigrid.envs:BlockedUnlockPickupV2'
+)
+
+
+register(
+    id='MiniGrid-BlockedUnlockPickupEGO-v0',
+    entry_point='gym_minigrid.envs:BlockedUnlockPickupEGOV3'
 )
