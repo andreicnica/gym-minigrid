@@ -12,14 +12,16 @@ class BlockedUnlockPickupV2(RoomGrid):
     in another room
     """
 
-    def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=1,
-                 reward_ball=False, see_through_walls=True, agent_view_size=7):
+    def __init__(self, seed=None, full_task=True, with_reward=False, num_rows=2,
+                 reward_ball=False, see_through_walls=True, agent_view_size=7,
+                 reset_on_intent=False):
         room_size = 6
         self.full_task = full_task
         self._randPos = self._rand_pos
         self._carrying = None
         self._with_reward = with_reward
         self._reward_ball = reward_ball
+        self._reset_on_intent = reset_on_intent
 
         super().__init__(
             num_rows=num_rows,
@@ -82,6 +84,7 @@ class BlockedUnlockPickupV2(RoomGrid):
 
         # self.place_agent(0, 0)
         obj, _ = self.add_object(1, 0, kind="box")
+        self.unwrapped.box = obj
 
         # Make sure the two rooms are directly connected by a locked door
         door, door_pos = self.add_door(0, 0, 0, locked=True)
@@ -104,6 +107,9 @@ class BlockedUnlockPickupV2(RoomGrid):
         else:
             the_ball, ball_pos = self.add_object(self._rand_int(0, 2), 0, 'ball', color)
             blocked = False
+
+        self.unwrapped.the_ball = the_ball
+        self.unwrapped.the_ball.cur_pos = ball_pos
 
         # Place agent
         room_pos = self._rand_int(0, 2)
@@ -146,14 +152,16 @@ class BlockedUnlockPickupV2(RoomGrid):
                 while not_placed:
                     new_pos = room.rand_pos(self)
                     ooo = self.grid.get(*new_pos)
-
+                    key = Key(door.color)
                     if ooo is not None or new_pos == self.agent_pos:
                         if new_pos == self.agent_pos:
-                            self._carrying = Key(door.color)
+                            self._carrying = key
                         else:
                             continue
                     else:
-                        self.grid.set(*new_pos, Key(door.color))
+                        self.grid.set(*new_pos, key)
+
+                    self.unwrapped.key = key
 
                     not_placed = False
 
@@ -163,6 +171,8 @@ class BlockedUnlockPickupV2(RoomGrid):
     def _full_task_gen_grid(self, ):
         # Add a box to the room on the right
         obj, _ = self.add_object(1, 0, kind="box")
+        self.unwrapped.box = obj
+
         # Make sure the two rooms are directly connected by a locked door
         door, pos = self.add_door(0, 0, 0, locked=True)
         self.unwrapped.door = door
@@ -171,9 +181,13 @@ class BlockedUnlockPickupV2(RoomGrid):
         # Block the door with a ball
         color = self._rand_color()
         the_ball = Ball(color)
+        self.unwrapped.the_ball = the_ball
+        self.unwrapped.the_ball.cur_pos = pos[0]-1, pos[1]
+
         self.grid.set(pos[0]-1, pos[1], the_ball)
         # Add a key to unlock the door
-        self.add_object(0, 0, 'key', door.color)
+        key, _ = self.add_object(0, 0, 'key', door.color)
+        self.unwrapped.key = key
 
         self.place_agent(0, 0)
 
@@ -181,7 +195,19 @@ class BlockedUnlockPickupV2(RoomGrid):
         self.mission = "pick up the %s %s" % (obj.color, obj.type)
 
     def step(self, action):
+        ooo = self.grid.get(*self.unwrapped.blocked_pos)
+        door_open = self.unwrapped.door.is_open
+
         obs, reward, done, info = super().step(action)
+
+        if self._reset_on_intent:
+            if action == self.actions.pickup:
+                if self.carrying and self.carrying in [self.unwrapped.key, self.unwrapped.box]:
+                    done = True
+            if ooo is not None and self.grid.get(*self.unwrapped.blocked_pos) is None:
+                done = True
+            if not door_open and self.unwrapped.door.is_open:
+                done = True
 
         if self._with_reward:
             if action == self.actions.pickup:
