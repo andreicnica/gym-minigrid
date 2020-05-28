@@ -12,7 +12,7 @@ class BlockedUnlockPickupV2(RoomGrid):
     in another room
     """
 
-    def __init__(self, seed=None, full_task=True, with_reward=False, num_rows=2,
+    def __init__(self, seed=None, full_task=False, with_reward=False, num_rows=2,
                  reward_ball=False, see_through_walls=True, agent_view_size=7,
                  reset_on_intent=False):
         room_size = 6
@@ -137,13 +137,13 @@ class BlockedUnlockPickupV2(RoomGrid):
         # Add a key to unlock the door
         if self._carrying is not None:
             room_pos_key = self._rand_int(0, 2) if door.is_open else room_pos
-            self.add_object(room_pos_key, 0, 'key', door.color)
+            key, _ = self.add_object(room_pos_key, 0, 'key', door.color)
         else:
             # Should place key anywhere - even "over" agent
             # Must also consider the door if it is locked
             if not door.is_open and not blocked and self._rand_int(0, 4) == 0:
                 # TODO hardcoded prob for having key
-                self._carrying = Key(door.color)
+                self._carrying = key = Key(door.color)
             else:
                 room_pos_key = self._rand_int(0, 2) if door.is_open else room_pos
                 room = self.get_room(room_pos_key, 0)
@@ -160,10 +160,9 @@ class BlockedUnlockPickupV2(RoomGrid):
                             continue
                     else:
                         self.grid.set(*new_pos, key)
-
-                    self.unwrapped.key = key
-
                     not_placed = False
+
+        self.unwrapped.key = key
 
         self.obj = obj if not self._reward_ball else the_ball
         self.mission = "pick up the %s %s" % (obj.color, obj.type)
