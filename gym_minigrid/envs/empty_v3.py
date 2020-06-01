@@ -32,7 +32,7 @@ class EmptySeqEnvV0(MiniGridEnv):
         rand_generator=123,
         task_size=1,
         switch_steps=1024,
-        fixed_batch=False,
+        fixed_batch=True,
     ):
         self.agent_start_pos = agent_pos
         self.agent_start_dir = None if agent_dir is None else np.clip(agent_dir, 0, 4)
@@ -53,7 +53,8 @@ class EmptySeqEnvV0(MiniGridEnv):
         goal_poss = goal_poss[fff]
         goal_poss = goal_poss[(goal_poss != np.array([1, 1])).any(axis=1)]
 
-        np.random.RandomState(rand_generator).shuffle(goal_poss)
+        self.goal_set_rstate = np.random.RandomState(rand_generator)
+        self.goal_set_rstate.shuffle(goal_poss)
 
         self._crt_ep_step = 0
         self._crt_step = 0
@@ -65,9 +66,11 @@ class EmptySeqEnvV0(MiniGridEnv):
 
         if fixed_batch:
             self.train_goals = goal_poss[:(len(goal_poss) // task_size) * task_size]
+            print("diff", len(self.train_goals), len(goal_poss))
         else:
             self.train_goals = goal_poss
 
+        self._prev_reset = -1
         self.next_batch()
 
         super().__init__(
@@ -87,6 +90,9 @@ class EmptySeqEnvV0(MiniGridEnv):
         self._crt_ep_step = value
 
     def next_batch(self):
+        if self._prev_reset == self._crt_step:
+            return
+
         train_goals = self.train_goals
         batch_size = self.batch_size
         self._crt_goal_batch_idx = (self._crt_goal_batch_idx + batch_size) % len(train_goals)
@@ -97,7 +103,10 @@ class EmptySeqEnvV0(MiniGridEnv):
         else:
             goals_batch = train_goals[btch_start_idx: btch_start_idx + batch_size]
 
+        print(getattr(self.unwrapped, "_env_proc_id", "NONE"), self._crt_step, goals_batch)
+
         self._crt_goal_batch = goals_batch
+        self._prev_reset = self._crt_step
 
     def _gen_grid(self, width, height):
         # Create an empty grid
@@ -149,20 +158,12 @@ class EmptySeqEnvV0(MiniGridEnv):
     def step(self, action):
         obs, reward, done, info = super().step(action)
 
-        if self._crt_step % self.switch_steps == 0:
-            self.next_batch()
-            done = True
-
         return obs, reward, done, info
 
     def _get_done(self):
         done = False
 
         if self.step_count >= self.max_steps:
-            done = True
-
-        if self._crt_step % self.switch_steps == 0:
-            self.next_batch()
             done = True
 
         return done
