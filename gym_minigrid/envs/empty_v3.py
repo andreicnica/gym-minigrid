@@ -103,8 +103,6 @@ class EmptySeqEnvV0(MiniGridEnv):
         else:
             goals_batch = train_goals[btch_start_idx: btch_start_idx + batch_size]
 
-        print(getattr(self.unwrapped, "_env_proc_id", "NONE"), self._crt_step, goals_batch)
-
         self._crt_goal_batch = goals_batch
         self._prev_reset = self._crt_step
 
