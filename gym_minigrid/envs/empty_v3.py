@@ -66,7 +66,6 @@ class EmptySeqEnvV0(MiniGridEnv):
 
         if fixed_batch:
             self.train_goals = goal_poss[:(len(goal_poss) // task_size) * task_size]
-            print("diff", len(self.train_goals), len(goal_poss))
         else:
             self.train_goals = goal_poss
 
