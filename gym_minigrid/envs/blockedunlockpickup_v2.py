@@ -160,6 +160,7 @@ class BlockedUnlockPickupV2(RoomGrid):
                             continue
                     else:
                         self.grid.set(*new_pos, key)
+                        key.cur_pos = new_pos
                     not_placed = False
 
         self.unwrapped.key = key
@@ -184,6 +185,7 @@ class BlockedUnlockPickupV2(RoomGrid):
         self.unwrapped.the_ball.cur_pos = pos[0]-1, pos[1]
 
         self.grid.set(pos[0]-1, pos[1], the_ball)
+        the_ball.cur_pos = [pos[0]-1, pos[1]]
         # Add a key to unlock the door
         key, _ = self.add_object(0, 0, 'key', door.color)
         self.unwrapped.key = key
