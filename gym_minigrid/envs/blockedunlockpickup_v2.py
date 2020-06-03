@@ -198,17 +198,26 @@ class BlockedUnlockPickupV2(RoomGrid):
     def step(self, action):
         ooo = self.grid.get(*self.unwrapped.blocked_pos)
         door_open = self.unwrapped.door.is_open
+        intent = None
+
+        if action >= 10:
+            intent = action // 10
+            action = action % 10
 
         obs, reward, done, info = super().step(action)
 
         if self._reset_on_intent:
             if action == self.actions.pickup:
-                if self.carrying and self.carrying in [self.unwrapped.key, self.unwrapped.box]:
+                if self.carrying == self.unwrapped.box and (intent is None or intent == 4):
                     done = True
-            if ooo is not None and self.grid.get(*self.unwrapped.blocked_pos) is None:
-                done = True
+                elif self.carrying == self.unwrapped.key and (intent is None or intent == 2):
+                    done = True
+            if ooo == self.unwrapped.the_ball and self.grid.get(*self.unwrapped.blocked_pos) is None:
+                if intent is None or intent == 1:
+                    done = True
             if not door_open and self.unwrapped.door.is_open:
-                done = True
+                if intent is None or intent == 3:
+                    done = True
 
         if self._with_reward:
             if action == self.actions.pickup:
