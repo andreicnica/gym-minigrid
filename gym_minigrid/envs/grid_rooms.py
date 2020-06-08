@@ -5,15 +5,16 @@ from gym_minigrid.register import register
 
 class GridRooms(RoomGrid):
     def __init__(self,
-        num_rows=3,
-        num_cols=3,
-        seed=None,
-        max_steps=400,
-        agent_pos=None,
-        goal_pos=None,
-        room_size=7,
-        middle_door=False
-    ):
+                 num_rows=3,
+                 num_cols=3,
+                 seed=None,
+                 max_steps=400,
+                 agent_pos=None,
+                 goal_pos=None,
+                 room_size=7,
+                 middle_door=False,
+                 reset_on_intent=False,
+                 ):
 
         self._agent_default_pos = agent_pos
         self._goal_default_pos = goal_pos
@@ -21,6 +22,9 @@ class GridRooms(RoomGrid):
             self._door_rand = lambda x, y: x+(y-x)//2
         else:
             self._door_rand = self._rand_int
+
+        self._reset_on_intent = reset_on_intent
+        self._intent_start_room = None
 
         super().__init__(
             room_size=room_size,
@@ -105,6 +109,14 @@ class GridRooms(RoomGrid):
             self.place_obj(Goal())
 
     def step(self, action):
+        # The step method might be overwritten by a wrapper
+        if action > 10:
+            intent = action // 100 - 1
+            new_op = (action // 10) % 10
+            action = action % 10
+            if new_op:
+                self._intent_start_room = self.agent_pos // (self.room_size - 1)
+
         obs, reward, done, info = MiniGridEnv.step(self, action)
         return obs, reward, done, info
 

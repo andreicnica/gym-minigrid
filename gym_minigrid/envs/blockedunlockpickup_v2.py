@@ -39,7 +39,6 @@ class BlockedUnlockPickupV2(RoomGrid):
             dtype='uint8'
         )
 
-
     def _gen_grid(self, width, height):
         super()._gen_grid(width, height)
 
@@ -201,22 +200,23 @@ class BlockedUnlockPickupV2(RoomGrid):
         intent = None
 
         if action >= 10:
-            intent = action // 10
+            intent = action // 100 - 1
+            new_op = (action // 10) % 10
             action = action % 10
 
         obs, reward, done, info = super().step(action)
 
         if self._reset_on_intent:
             if action == self.actions.pickup:
-                if self.carrying == self.unwrapped.box and (intent is None or intent == 4):
+                if self.carrying == self.unwrapped.box and (intent is None or intent == 3):
                     done = True
-                elif self.carrying == self.unwrapped.key and (intent is None or intent == 2):
+                elif self.carrying == self.unwrapped.key and (intent is None or intent == 1):
                     done = True
             if ooo == self.unwrapped.the_ball and self.grid.get(*self.unwrapped.blocked_pos) is None:
-                if intent is None or intent == 1:
+                if intent is None or intent == 0:
                     done = True
             if not door_open and self.unwrapped.door.is_open:
-                if intent is None or intent == 3:
+                if intent is None or intent == 2:
                     done = True
 
         if self._with_reward:
