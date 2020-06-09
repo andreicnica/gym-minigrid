@@ -1,3 +1,5 @@
+from collections import deque
+
 from gym_minigrid.minigrid import *
 from gym_minigrid.roomgrid import RoomGrid, Room
 from gym_minigrid.register import register
@@ -14,6 +16,7 @@ class GridRooms(RoomGrid):
                  room_size=7,
                  middle_door=False,
                  reset_on_intent=False,
+                 intent_window=3,
                  ):
 
         self._agent_default_pos = agent_pos
@@ -24,6 +27,7 @@ class GridRooms(RoomGrid):
             self._door_rand = self._rand_int
 
         self._reset_on_intent = reset_on_intent
+        self._intent_completions = deque([0] * intent_window, maxlen=intent_window)
         self._intent_start_room = None
 
         super().__init__(
