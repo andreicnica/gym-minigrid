@@ -133,6 +133,7 @@ class GridRooms(RoomGrid):
                 self.put_obj(new_goal, i, j)
             else:
                 self.place_obj(new_goal)
+        self._goal_crt_pos = goal.cur_pos
 
     def step(self, action):
         # The step method might be overwritten by a wrapper
