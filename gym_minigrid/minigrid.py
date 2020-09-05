@@ -46,6 +46,7 @@ OBJECT_TO_IDX = {
     'goal'          : 8,
     'lava'          : 9,
     'agent'         : 10,
+    'fake_goal'         : 8,
 }
 
 IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
@@ -767,6 +768,7 @@ class MiniGridEnv(gym.Env):
             'box'           : 'B',
             'goal'          : 'G',
             'lava'          : 'V',
+            'fake_goal'     : 'G',
         }
 
         # Short string for opened door

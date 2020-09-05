@@ -17,6 +17,8 @@ class GridRooms(RoomGrid):
                  middle_door=False,
                  reset_on_intent=False,
                  intent_window=3,
+                 goal_center_room=False,
+                 fake_goal=False,
                  ):
 
         self._agent_default_pos = agent_pos
@@ -29,6 +31,9 @@ class GridRooms(RoomGrid):
         self._reset_on_intent = reset_on_intent
         self._intent_completions = deque([0] * intent_window, maxlen=intent_window)
         self._intent_start_room = None
+
+        self._goal_center_room = goal_center_room
+        self._fake_goal = fake_goal
 
         super().__init__(
             room_size=room_size,
@@ -103,14 +108,31 @@ class GridRooms(RoomGrid):
             self.place_agent()
 
         # Randomize the goal start position and orientation
+        new_goal = Goal()
+        if self._fake_goal:
+            new_goal.type = "fake_goal"
+
         if self._goal_default_pos is not None:
             if self._goal_default_pos[0] > 0:
-                goal = Goal()
+                goal = new_goal
                 goal_pos = self._goal_default_pos
                 self.put_obj(goal, *goal_pos)
                 goal.init_pos, goal.cur_pos = goal_pos
         else:
-            self.place_obj(Goal())
+            if self._goal_center_room:
+                room_size = self.room_size
+
+                # Position goal in the center of one random room except for the one with the agent
+                ag_room_pos = goal_room = tuple(self.agent_pos // (self.room_size - 1))
+
+                while goal_room == ag_room_pos:
+                    goal_room = (self._rand_int(0, self.num_cols), self._rand_int(0, self.num_rows))
+
+                i = goal_room[0] * (room_size - 1) + room_size//2
+                j = goal_room[1] * (room_size - 1) + room_size//2
+                self.put_obj(new_goal, i, j)
+            else:
+                self.place_obj(new_goal)
 
     def step(self, action):
         # The step method might be overwritten by a wrapper
