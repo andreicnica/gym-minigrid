@@ -1,4 +1,5 @@
 from collections import deque
+import numpy as np
 
 from gym_minigrid.minigrid import *
 from gym_minigrid.roomgrid import RoomGrid, Room
@@ -131,6 +132,7 @@ class GridRooms(RoomGrid):
                 i = goal_room[0] * (room_size - 1) + room_size//2
                 j = goal_room[1] * (room_size - 1) + room_size//2
                 self.put_obj(new_goal, i, j)
+                new_goal.init_pos, new_goal.cur_pos = np.array([i, j])
             else:
                 self.place_obj(new_goal)
         self.goal_crt_pos = new_goal.cur_pos
