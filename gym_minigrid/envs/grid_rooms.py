@@ -149,7 +149,7 @@ class GridRooms(RoomGrid):
                 self._intent_start_room = self.agent_pos // (self.room_size - 1)
 
         obs, reward, done, info = MiniGridEnv.step(self, action)
-        if self._reward_room:
+        if self._reward_room and not self._fake_goal:
             room_pos = self.agent_pos // (self.room_size - 1)
             goal_room = self.goal_crt_pos // (self.room_size - 1)
             if (room_pos == goal_room).all():
