@@ -20,6 +20,7 @@ class GridRooms(RoomGrid):
                  intent_window=3,
                  goal_center_room=False,
                  fake_goal=False,
+                 reward_room=False,
                  ):
 
         self._agent_default_pos = agent_pos
@@ -35,6 +36,7 @@ class GridRooms(RoomGrid):
 
         self._goal_center_room = goal_center_room
         self._fake_goal = fake_goal
+        self._reward_room = reward_room
 
         super().__init__(
             room_size=room_size,
@@ -132,7 +134,7 @@ class GridRooms(RoomGrid):
                 i = goal_room[0] * (room_size - 1) + room_size//2
                 j = goal_room[1] * (room_size - 1) + room_size//2
                 self.put_obj(new_goal, i, j)
-                new_goal.init_pos, new_goal.cur_pos = np.array([i, j])
+                new_goal.init_pos = new_goal.cur_pos = np.array([i, j])
             else:
                 self.place_obj(new_goal)
         self.goal_crt_pos = new_goal.cur_pos
@@ -147,6 +149,13 @@ class GridRooms(RoomGrid):
                 self._intent_start_room = self.agent_pos // (self.room_size - 1)
 
         obs, reward, done, info = MiniGridEnv.step(self, action)
+        if self._reward_room:
+            room_pos = self.agent_pos // (self.room_size - 1)
+            goal_room = self.goal_crt_pos // (self.room_size - 1)
+            if (room_pos == goal_room).all():
+                done = True
+                reward = self._reward()
+
         return obs, reward, done, info
 
 
