@@ -12,15 +12,15 @@ class GridRooms(RoomGrid):
                  num_cols=3,
                  seed=None,
                  max_steps=400,
-                 agent_pos=None,
-                 goal_pos=None,
+                 agent_pos=[9, 15],
+                 goal_pos=[15, 15],
                  room_size=7,
-                 middle_door=False,
+                 middle_door=True,
                  reset_on_intent=False,
                  intent_window=3,
                  goal_center_room=False,
                  fake_goal=False,
-                 reward_room=False,
+                 reward_room=True,
                  ):
 
         self._agent_default_pos = agent_pos
@@ -104,7 +104,7 @@ class GridRooms(RoomGrid):
 
         # Randomize the player start position and orientation
         if self._agent_default_pos is not None:
-            self.agent_pos = self._agent_default_pos
+            self.agent_pos = np.array(self._agent_default_pos)
             self.grid.set(*self._agent_default_pos, None)
             self.agent_dir = self._rand_int(0, 4)  # assuming random start direction
         else:
