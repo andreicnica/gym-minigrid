@@ -21,6 +21,7 @@ class GridRooms(RoomGrid):
                  goal_center_room=False,
                  fake_goal=False,
                  reward_room=True,
+                 goal_rooms=0
                  ):
 
         self._agent_default_pos = agent_pos
@@ -37,6 +38,12 @@ class GridRooms(RoomGrid):
         self._goal_center_room = goal_center_room
         self._fake_goal = fake_goal
         self._reward_room = reward_room
+
+        room_sets = [[[15, 15]], [[9, 15], [15, 15]], [[3, 15], [9, 15], [15, 15]]]
+        self._goal_rooms = None
+
+        if goal_rooms > 0:
+            self._goal_rooms = room_sets[goal_rooms-1]
 
         super().__init__(
             room_size=room_size,
@@ -114,6 +121,9 @@ class GridRooms(RoomGrid):
         new_goal = Goal()
         if self._fake_goal:
             new_goal.type = "fake_goal"
+
+        if self._goal_rooms is not None:
+            self._goal_default_pos = self._goal_rooms[self._rand_int(0, len(self._goal_rooms))]
 
         if self._goal_default_pos is not None:
             if self._goal_default_pos[0] > 0:
