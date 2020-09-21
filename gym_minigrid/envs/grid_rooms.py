@@ -21,7 +21,8 @@ class GridRooms(RoomGrid):
                  goal_center_room=False,
                  fake_goal=False,
                  reward_room=True,
-                 goal_rooms=0
+                 goal_rooms=0,
+                 change_room_steps=0
                  ):
 
         self._agent_default_pos = agent_pos
@@ -38,6 +39,7 @@ class GridRooms(RoomGrid):
         self._goal_center_room = goal_center_room
         self._fake_goal = fake_goal
         self._reward_room = reward_room
+        self._change_room_steps = change_room_steps # implemented in wrapper
 
         room_sets = [[[15, 15]], [[9, 15], [15, 15]], [[3, 15], [9, 15], [15, 15]]]
         self._goal_rooms = None
