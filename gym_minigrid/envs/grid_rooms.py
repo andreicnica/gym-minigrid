@@ -22,7 +22,7 @@ class GridRooms(RoomGrid):
                  fake_goal=False,
                  reward_room=True,
                  goal_rooms=0,
-                 change_room_steps=0
+                 multitask=False
                  ):
 
         self._agent_default_pos = agent_pos
@@ -39,7 +39,7 @@ class GridRooms(RoomGrid):
         self._goal_center_room = goal_center_room
         self._fake_goal = fake_goal
         self._reward_room = reward_room
-        self._change_room_steps = change_room_steps # implemented in wrapper
+        self._multitask = multitask  # implemented in wrapper
 
         room_sets = [[[15, 15]], [[9, 15], [15, 15]], [[3, 15], [9, 15], [15, 15]]]
         self._goal_rooms = None
@@ -132,7 +132,8 @@ class GridRooms(RoomGrid):
                 goal = new_goal
                 goal_pos = self._goal_default_pos
                 self.put_obj(goal, *goal_pos)
-                goal.init_pos, goal.cur_pos = goal_pos
+                goal.init_pos = goal.cur_pos = np.array(goal_pos)
+                new_goal = goal
         else:
             if self._goal_center_room:
                 room_size = self.room_size
@@ -149,6 +150,17 @@ class GridRooms(RoomGrid):
                 new_goal.init_pos = new_goal.cur_pos = np.array([i, j])
             else:
                 self.place_obj(new_goal)
+
+        if new_goal.cur_pos[0] == self.agent_pos[0] and new_goal.cur_pos[1] == self.agent_pos[1]:
+            # move agent in empty pos
+            i, j = new_goal.cur_pos
+            for ni, nj in [[i-1, j], [i, j-1], [i+1, j], [i, j+1]]:
+                c = self.grid.get(ni, nj)
+                if c is None:
+                    self.agent_pos = np.array([ni, nj])
+                    self.grid.set(ni, nj, None)
+                    break
+        # print(self.agent_pos, new_goal.cur_pos)
         self.goal_crt_pos = new_goal.cur_pos
 
     def step(self, action):
