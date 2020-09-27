@@ -51,14 +51,14 @@ def get_room_neighbour(rix, x, y):
 
 class GridMaze(GridRooms):
     def __init__(self,
-                 num_rows=6,
-                 num_cols=6,
+                 grid_size=3,
                  goal_center_room=True,
-                 close_doors_trials=30,
+                 close_doors_trials=0.4,
                  **kwargs
                  ):
+        num_rows = num_cols = grid_size
         assert num_rows == num_cols, "Square only now"
-        self.close_doors_trials = close_doors_trials
+        self.close_doors_trials = int(num_rows * num_rows * 4 * close_doors_trials)
 
         super().__init__(num_rows=num_rows, num_cols=num_cols, goal_center_room=goal_center_room,
                          **kwargs)
