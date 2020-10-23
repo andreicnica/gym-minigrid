@@ -136,7 +136,7 @@ class OneHotPartialObsWrapper(gym.core.ObservationWrapper):
 
     def observation(self, obs):
         img = obs['image']
-        out = np.zeros(self.observation_space.shape, dtype='uint8')
+        out = np.zeros(self.observation_space['image'].shape, dtype='uint8')
 
         for i in range(img.shape[0]):
             for j in range(img.shape[1]):
@@ -148,10 +148,11 @@ class OneHotPartialObsWrapper(gym.core.ObservationWrapper):
                 out[i, j, len(OBJECT_TO_IDX) + color] = 1
                 out[i, j, len(OBJECT_TO_IDX) + len(COLOR_TO_IDX) + state] = 1
 
-        return {
-            'mission': obs['mission'],
-            'image': out
-        }
+        # obs["orig"] = img
+        obs["image"] = out
+
+        return obs
+
 
 class RGBImgObsWrapper(gym.core.ObservationWrapper):
     """

@@ -53,7 +53,8 @@ class GridMaze(GridRooms):
     def __init__(self,
                  grid_size=3,
                  goal_center_room=True,
-                 close_doors_trials=0.4,
+                 close_doors_trials=0.0,
+                 same_maze=True,
                  **kwargs
                  ):
         num_rows = num_cols = grid_size
@@ -106,7 +107,85 @@ class GridMaze(GridRooms):
                     room.door_pos[select_door] = None
 
 
+class GridMazeEGO(GridMaze):
+    def __init__(self, *args, agent_view_size=13, see_through_walls=True, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.see_through_walls = see_through_walls
+        self.agent_view_size = agent_view_size
+        self.observation_space.spaces["image"] = spaces.Box(
+            low=0,
+            high=255,
+            shape=(agent_view_size, agent_view_size, 3),
+            dtype='uint8'
+        )
+
+    def get_view_exts(self):
+        topY = self.agent_pos[1] - self.agent_view_size // 2
+        topX = self.agent_pos[0] - self.agent_view_size // 2
+        botX = topX + self.agent_view_size
+        botY = topY + self.agent_view_size
+
+        return (topX, topY, botX, botY)
+
+    def gen_obs_grid(self):
+        """
+        Generate the sub-grid observed by the agent.
+        This method also outputs a visibility mask telling us which grid
+        cells the agent can actually see.
+        """
+
+        topX, topY, botX, botY = self.get_view_exts()
+
+        grid = self.grid.slice(topX, topY, self.agent_view_size, self.agent_view_size)
+
+        # for i in range(self.agent_dir + 1):
+        #     grid = grid.rotate_left()
+
+        # Process occluders and visibility
+        # Note that this incurs some performance cost
+        if not self.see_through_walls:
+            vis_mask = grid.process_vis(agent_pos=(self.agent_view_size // 2,
+                                                   self.agent_view_size // 2))
+        else:
+            vis_mask = np.ones(shape=(grid.width, grid.height), dtype=np.bool)
+
+        # Make it so the agent sees what it's carrying
+        # We do this by placing the carried object at the agent's position
+        # in the agent's partially observable view
+        agent_pos = grid.width // 2, grid.height // 2
+        if self.carrying:
+            grid.set(*agent_pos, self.carrying)
+        else:
+            grid.set(*agent_pos, None)
+
+        return grid, vis_mask
+
+    def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
+        """
+        Render an agent observation for visualization
+        """
+
+        grid, vis_mask = Grid.decode(obs)
+        vis_mask.fill(True)
+
+        # Render the whole grid
+        img = grid.render(
+            tile_size,
+            agent_pos=(self.agent_view_size // 2, self.agent_view_size // 2),
+            agent_dir=3,
+            highlight_mask=vis_mask
+        )
+
+        return img
+
+
 register(
     id="MiniGrid-GridMaze-v0",
     entry_point="gym_minigrid.envs:GridMaze"
+)
+
+register(
+    id="MiniGrid-GridMazeEGO-v0",
+    entry_point="gym_minigrid.envs:GridMazeEGO"
 )

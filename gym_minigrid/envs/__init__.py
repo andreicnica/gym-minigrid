@@ -25,3 +25,4 @@ from gym_minigrid.envs.distshift import *
 from gym_minigrid.envs.grid_rooms import *
 from gym_minigrid.envs.blockedunlockpickup_v2 import *
 from gym_minigrid.envs.grid_maze import *
+from gym_minigrid.envs.multi_object import *
