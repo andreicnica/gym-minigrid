@@ -34,6 +34,7 @@ class MultiObject(RoomGrid):
 
         self._objs = objs = []
         self._collected_obj = list()
+        self._available_obj = list([False] * self._num_obj)
         self._crt_task = None
 
         while len(objs) < num_obj:
@@ -57,9 +58,13 @@ class MultiObject(RoomGrid):
 
     def reset(self):
         self._crt_task = None
-        obs = super().reset()
         self._collected_obj = list()
+        self._available_obj = list([False] * self._num_obj)
+
+        obs = super().reset()
         obs["collected"] = -1
+        obs["available_obj"] = self._available_obj
+
         return obs
 
     def _gen_grid(self, width, height):
@@ -77,6 +82,7 @@ class MultiObject(RoomGrid):
             obj = task_obj[0](task_obj[1])
             obj._obj_id = st_i + i
             self.place_obj(obj)
+            self._available_obj[obj._obj_id] = True
 
         self.place_agent()
 
@@ -92,11 +98,14 @@ class MultiObject(RoomGrid):
             self.carrying = None
             obs = self.gen_obs()
             obs["collected"] = obj_id
+            self._available_obj[obj_id] = False
 
         if len(self._collected_obj) == self._task_size:
             if self.full_task and self._collected_obj == self._crt_task_ids:
                 reward = 1
             done = True
+
+        obs["available_obj"] = self._available_obj
 
         return obs, reward, done, info
 
