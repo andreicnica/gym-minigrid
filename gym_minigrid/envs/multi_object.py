@@ -99,7 +99,7 @@ class MultiObject(RoomGrid):
         if self.carrying is not None:
             obj_id = self.carrying._obj_id
             self._collected_obj.append(obj_id)
-            obs = self.gen_obs()
+            # obs = self.gen_obs()
             obs["collected"] = obj_id
             self._available_obj[obj_id] = False
 
