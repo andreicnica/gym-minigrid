@@ -35,6 +35,7 @@ class MultiObject(RoomGrid):
         self._objs = objs = []
         self._collected_obj = list()
         self._available_obj = list([False] * self._num_obj)
+        self._obj_pos = list()
         self._crt_task = None
 
         while len(objs) < num_obj:
@@ -60,6 +61,7 @@ class MultiObject(RoomGrid):
         self._crt_task = None
         self._collected_obj = list()
         self._available_obj = list([False] * self._num_obj)
+        self._obj_pos = list()
 
         obs = super().reset()
         obs["collected"] = -1
@@ -81,7 +83,8 @@ class MultiObject(RoomGrid):
             task_obj = objs[st_i + i]
             obj = task_obj[0](task_obj[1])
             obj._obj_id = st_i + i
-            self.place_obj(obj)
+            pos = self.place_obj(obj)
+            self._obj_pos.append(pos)
             self._available_obj[obj._obj_id] = True
 
         self.place_agent()
@@ -223,6 +226,50 @@ class MultiObjectEGOOneHot(MultiObjectEGO):
         return obs
 
 
+class MultiObjectEGOtest(MultiObjectEGO):
+    """
+    Unlock a door blocked by a ball, then pick up a box
+    in another room
+    """
+
+    def step(self, complex_actions):
+
+        op = (complex_actions // 10) - 1
+        action = complex_actions % 10
+
+        # if not self._available_obj[op]:
+        #     obs = self.gen_obs()
+        #     return obs, 0, True, dict()
+
+        obs, reward, done, info = super().step(action)
+
+        obs["collected"] = -1
+
+        if self.carrying is not None:
+            obj_id = self.carrying._obj_id
+
+            if obj_id == op:
+                self._collected_obj.append(obj_id)
+                self.carrying = None
+                obs = self.gen_obs()
+                obs["collected"] = obj_id
+                self._available_obj[obj_id] = False
+            else:
+                pos = self.place_obj(self.carrying)
+                self._obj_pos[obj_id] = pos
+                self.carrying = None
+                obs = self.gen_obs()
+
+        if len(self._collected_obj) == self._task_size:
+            if self.full_task and self._collected_obj == self._crt_task_ids:
+                reward = 1
+            done = True
+
+        obs["available_obj"] = self._available_obj
+
+        return obs, reward, done, info
+
+
 
 
 register(
@@ -233,6 +280,11 @@ register(
 register(
     id='MiniGrid-MultiObjectEGO-v0',
     entry_point='gym_minigrid.envs:MultiObjectEGO'
+)
+
+register(
+    id='MiniGrid-MultiObjectEGOtest-v0',
+    entry_point='gym_minigrid.envs:MultiObjectEGOtest'
 )
 
 register(
