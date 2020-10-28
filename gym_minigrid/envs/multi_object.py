@@ -90,6 +90,7 @@ class MultiObject(RoomGrid):
         self.place_agent()
 
     def step(self, action):
+        self.carrying = None
 
         obs, reward, done, info = super().step(action)
 
@@ -98,7 +99,6 @@ class MultiObject(RoomGrid):
         if self.carrying is not None:
             obj_id = self.carrying._obj_id
             self._collected_obj.append(obj_id)
-            self.carrying = None
             obs = self.gen_obs()
             obs["collected"] = obj_id
             self._available_obj[obj_id] = False
