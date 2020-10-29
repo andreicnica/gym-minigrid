@@ -170,6 +170,15 @@ class MultiObjectEGO(MultiObject):
 
         return grid, vis_mask
 
+    def gen_obs(self):
+        obs = super().gen_obs()
+
+        # Be specific about carrying in the observation
+        if self.carrying:
+            agent_pos = self.grid.width // 2, self.grid.height // 2
+            obs["image"][agent_pos[0]+1, agent_pos[1]+1, 2] = 2
+        return obs
+
     def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
         """
         Render an agent observation for visualization
