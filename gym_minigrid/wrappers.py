@@ -191,8 +191,8 @@ class CustomOneHotPartialObsWrapper(gym.core.ObservationWrapper):
                 out[i, j, len(OBJECT_TO_IDX) + color] = 1
                 out[i, j, len(OBJECT_TO_IDX) + len(COLOR_TO_IDX) + state] = 1
 
-        cw, ch = img.shape[0]//2, img.shape[1]//2
-        img[cw, ch] = img[cw, ch][::-1]
+        cw, ch = out.shape[0]//2, out.shape[1]//2
+        out[cw, ch] = out[cw, ch][::-1]
 
         # obs["orig"] = img
         obs["image"] = out
