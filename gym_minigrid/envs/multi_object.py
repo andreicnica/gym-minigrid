@@ -21,6 +21,7 @@ class MultiObject(RoomGrid):
                  task_size=3,
                  num_tasks=1,
                  task_id=1,
+                 reward_pickup=False
                  ):
 
         self.full_task = full_task
@@ -28,7 +29,9 @@ class MultiObject(RoomGrid):
         self._carrying = None
         self._task_size = task_size
         self._num_tasks = num_tasks
+        self._reward_pickup = reward_pickup
 
+        self._partial_reward = 0.5 / float(task_size)
         self._num_obj = num_obj = task_size * num_tasks
         self._rand_state = rnd = np.random.RandomState(task_id)
 
@@ -93,8 +96,10 @@ class MultiObject(RoomGrid):
         self.carrying = None
 
         obs, reward, done, info = super().step(action)
+        reward = 0
 
         obs["collected"] = -1
+        info["full_task_achieved"] = False
 
         if self.carrying is not None:
             obj_id = self.carrying._obj_id
@@ -102,10 +107,13 @@ class MultiObject(RoomGrid):
             # obs = self.gen_obs()
             obs["collected"] = obj_id
             self._available_obj[obj_id] = False
+            if self._reward_pickup:
+                reward += self._partial_reward
 
         if len(self._collected_obj) == self._task_size:
             if self.full_task and self._collected_obj == self._crt_task_ids:
-                reward = 1
+                reward = +1
+                info["full_task_achieved"] = True
             done = True
 
         obs["available_obj"] = self._available_obj
