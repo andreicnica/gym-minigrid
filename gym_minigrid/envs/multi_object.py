@@ -133,7 +133,7 @@ class MultiObjectEGO(MultiObject):
         self.observation_space.spaces["image"] = spaces.Box(
             low=0,
             high=255,
-            shape=(agent_view_size, agent_view_size, 4),
+            shape=(agent_view_size, agent_view_size, 3),
             dtype='uint8'
         )
 
