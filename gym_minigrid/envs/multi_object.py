@@ -78,7 +78,7 @@ class MultiObject(RoomGrid):
         task_size = self._task_size
         objs = self._objs
 
-        self._crt_task = task = np.random.randint(num_tasks)
+        self._crt_task = task = self.np_random.randint(num_tasks)
         st_i = task * task_size
         self._crt_task_ids = list(range(st_i, st_i + task_size))
 
@@ -133,7 +133,7 @@ class MultiObjectEGO(MultiObject):
         self.observation_space.spaces["image"] = spaces.Box(
             low=0,
             high=255,
-            shape=(agent_view_size, agent_view_size, 3),
+            shape=(agent_view_size, agent_view_size, 4),
             dtype='uint8'
         )
 
@@ -180,11 +180,8 @@ class MultiObjectEGO(MultiObject):
 
     def gen_obs(self):
         obs = super().gen_obs()
-
-        # Be specific about carrying in the observation
-        if self.carrying:
-            agent_pos = self.grid.width // 2, self.grid.height // 2
-            obs["image"][agent_pos[0]+1, agent_pos[1]+1, 2] = 2
+        agent_pos = self.grid.width // 2, self.grid.height // 2
+        obs["image"][agent_pos[0] + 1, agent_pos[1] + 1, 2] = 2
         return obs
 
     def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
