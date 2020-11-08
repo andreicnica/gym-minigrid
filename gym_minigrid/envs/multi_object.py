@@ -40,6 +40,7 @@ class MultiObject(RoomGrid):
         self._available_obj = list([False] * self._num_obj)
         self._obj_pos = list()
         self._crt_task = None
+        self._fixed_task_id = None
 
         while len(objs) < num_obj:
             obj = (rnd.choice(OBJ_TYPES), rnd.choice(COLOR_NAMES))
@@ -78,7 +79,11 @@ class MultiObject(RoomGrid):
         task_size = self._task_size
         objs = self._objs
 
-        self._crt_task = task = self.np_random.randint(num_tasks)
+        if self._fixed_task_id is None:
+            self._crt_task = task = self.np_random.randint(num_tasks)
+        else:
+            self._crt_task = task = self._fixed_task_id
+
         st_i = task * task_size
         self._crt_task_ids = list(range(st_i, st_i + task_size))
 
