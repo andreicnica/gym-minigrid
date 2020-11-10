@@ -51,9 +51,9 @@ def get_room_neighbour(rix, x, y):
 
 class GridMaze(GridRooms):
     def __init__(self,
-                 grid_size=3,
+                 grid_size=6,
                  goal_center_room=True,
-                 close_doors_trials=0.0,
+                 close_doors_trials=0.2,
                  same_maze=True,
                  **kwargs
                  ):
@@ -66,6 +66,7 @@ class GridMaze(GridRooms):
 
     def _gen_grid(self, width, height):
         super()._gen_grid(width, height)
+
         room_size = self.room_size - 1
         max_rooms = self.num_rows
         ag_pos = self.agent_pos
@@ -76,7 +77,10 @@ class GridMaze(GridRooms):
 
         checked_rooms = [tuple(ag_start_room)]
 
-        reached, rooms = connect_rooms(checked_rooms, goal_room, max_rooms)
+        if goal_room[0] == ag_start_room[0] and goal_room[1] == ag_start_room[1]:
+            reached, rooms = True, checked_rooms
+        else:
+            reached, rooms = connect_rooms(checked_rooms, goal_room, max_rooms)
 
         for i in range(close_doors_trials):
             # Pick random room. Try to close random door but not the one connecting ag to goal
@@ -105,7 +109,6 @@ class GridMaze(GridRooms):
                     # dx, dy = room.door_pos[select_door]
                     self.grid.set(dx, dy, Wall())
                     room.door_pos[select_door] = None
-
 
 class GridMazeEGO(GridMaze):
     def __init__(self, *args, agent_view_size=13, see_through_walls=True, **kwargs):
