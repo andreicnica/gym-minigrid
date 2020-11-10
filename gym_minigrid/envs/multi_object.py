@@ -21,7 +21,8 @@ class MultiObject(RoomGrid):
                  task_size=3,
                  num_tasks=1,
                  task_id=1,
-                 reward_pickup=False
+                 reward_pickup=False,
+                 **kwargs
                  ):
 
         self.full_task = full_task
@@ -53,6 +54,7 @@ class MultiObject(RoomGrid):
             room_size=room_size,
             max_steps=16*room_size**2,
             seed=seed,
+            **kwargs
         )
         self.see_through_walls = see_through_walls
         self.mission = "use the key to open the door and then get to the goal"
@@ -132,9 +134,10 @@ class MultiObjectEGO(MultiObject):
     in another room
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.agent_view_size= agent_view_size = (self.room_size - 3) * 2 + 1
+    def __init__(self, *args, room_size=14, **kwargs):
+        self.agent_view_size = agent_view_size = (room_size - 3) * 2 + 1
+        super().__init__(*args, agent_view_size = agent_view_size, room_size=room_size, **kwargs)
+
         self.observation_space.spaces["image"] = spaces.Box(
             low=0,
             high=255,
@@ -185,8 +188,9 @@ class MultiObjectEGO(MultiObject):
 
     def gen_obs(self):
         obs = super().gen_obs()
-        agent_pos = self.grid.width // 2, self.grid.height // 2
-        obs["image"][agent_pos[0] + 1, agent_pos[1] + 1, 2] = 2
+        w, h, _ = obs["image"].shape
+        agent_pos = w // 2, h // 2
+        obs["image"][agent_pos[0], agent_pos[1], 2] = 2
         return obs
 
     def get_obs_render(self, obs, tile_size=TILE_PIXELS//2):
