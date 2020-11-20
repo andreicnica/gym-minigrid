@@ -1,4 +1,5 @@
 import math
+import copy
 
 from gym_minigrid.minigrid import COLOR_NAMES, Box, Ball, Key
 from gym_minigrid.roomgrid import RoomGrid
@@ -34,19 +35,16 @@ class MultiObject(RoomGrid):
 
         self._partial_reward = 0.5 / float(task_size)
         self._num_obj = num_obj = task_size * num_tasks
+        self._task_id = task_id
         self._rand_state = rnd = np.random.RandomState(task_id)
 
-        self._objs = objs = []
         self._collected_obj = list()
         self._available_obj = list([False] * self._num_obj)
         self._obj_pos = list()
         self._crt_task = None
         self._fixed_task_id = None
 
-        while len(objs) < num_obj:
-            obj = (rnd.choice(OBJ_TYPES), rnd.choice(COLOR_NAMES))
-            if obj not in objs:
-                objs.append(obj)
+        self._objs = self.get_obj_list()
 
         super().__init__(
             num_rows=1,
@@ -62,6 +60,38 @@ class MultiObject(RoomGrid):
         self.observation_space.spaces["carrying"] = spaces.Box(
             low=0, high=255, shape=(1, ), dtype='uint8'
         )
+
+    def get_obj_list(self):
+        self._rand_state = rnd = np.random.RandomState(self._task_id)
+        objs = []
+
+        while len(objs) < self._num_obj:
+            obj = (rnd.choice(OBJ_TYPES), rnd.choice(COLOR_NAMES))
+            if obj not in objs:
+                objs.append(obj)
+        return objs
+
+    def get_new_sequence_all(self):
+        # Shuffle all objects
+        old_seq = copy.deepcopy(self._objs)
+        while old_seq == self._objs:
+            self._rand_state.shuffle(self._objs)
+
+    def get_new_sequence_per_task(self):
+        # Shuffle objs within the task
+        task_size = self._task_size
+        objs = self._objs
+        new_objs = []
+
+        for itask in range(self._num_tasks):
+            st_i = itask * task_size
+            task_objs = objs[st_i: st_i + task_size]
+            new_task_objs = copy.deepcopy(task_objs)
+
+            while new_task_objs == task_objs:
+                self._rand_state.shuffle(new_task_objs)
+            new_objs += new_task_objs
+        self._objs = new_objs
 
     def reset(self):
         self._crt_task = None
