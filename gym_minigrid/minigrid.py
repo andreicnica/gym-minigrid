@@ -185,8 +185,8 @@ class Floor(WorldObj):
         ])
 
 class Lava(WorldObj):
-    def __init__(self):
-        super().__init__('lava', 'red')
+    def __init__(self, color='red'):
+        super().__init__('lava', color)
 
     def can_overlap(self):
         return True

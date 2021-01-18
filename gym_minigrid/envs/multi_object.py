@@ -17,14 +17,15 @@ class MultiObject(RoomGrid):
     def __init__(self,
                  seed=None,
                  full_task=True,
-                 room_size=7,
+                 room_size=10,
                  see_through_walls=True,
-                 task_size=3,
+                 task_size=8,
                  num_tasks=1,
                  task_id=1,
                  reward_pickup=False,
                  **kwargs
                  ):
+        global OBJ_TYPES
 
         self.full_task = full_task
         self._randPos = self._rand_pos
@@ -35,6 +36,10 @@ class MultiObject(RoomGrid):
 
         self._partial_reward = 0.5 / float(task_size)
         self._num_obj = num_obj = task_size * num_tasks
+
+        if self._num_obj > 3 * 6:
+            OBJ_TYPES += [Lava, Door]
+
         self._task_id = task_id
         self._rand_state = rnd = np.random.RandomState(task_id)
 
@@ -69,6 +74,7 @@ class MultiObject(RoomGrid):
             obj = (rnd.choice(OBJ_TYPES), rnd.choice(COLOR_NAMES))
             if obj not in objs:
                 objs.append(obj)
+
         return objs
 
     def get_new_sequence_all(self):
@@ -132,7 +138,74 @@ class MultiObject(RoomGrid):
     def step(self, action):
         self.carrying = None
 
-        obs, reward, done, info = super().step(action)
+        # ==========================================================================================
+        # obs, reward, done, info = super().step(action)
+        self.step_count += 1
+
+        reward = 0
+        done = False
+
+        # Get the position in front of the agent
+        fwd_pos = self.front_pos
+
+        # Get the contents of the cell in front of the agent
+        fwd_cell = self.grid.get(*fwd_pos)
+
+        # Rotate left
+        if action == self.actions.left:
+            self.agent_dir -= 1
+            if self.agent_dir < 0:
+                self.agent_dir += 4
+
+        # Rotate right
+        elif action == self.actions.right:
+            self.agent_dir = (self.agent_dir + 1) % 4
+
+        # Move forward
+        elif action == self.actions.forward:
+            if fwd_cell == None or fwd_cell.can_overlap():
+                self.agent_pos = fwd_pos
+            # if fwd_cell != None and fwd_cell.type == 'goal':
+            #     done = True
+            #     reward = self._reward()
+            # if fwd_cell != None and fwd_cell.type == 'lava':
+            #     done = True
+
+        # Pick up an object
+        elif action == self.actions.pickup:
+            if fwd_cell:  # and fwd_cell.can_pickup():
+                if self.carrying is None:
+                    self.carrying = fwd_cell
+                    self.carrying.cur_pos = np.array([-1, -1])
+                    self.grid.set(*fwd_pos, None)
+
+        # Drop an object
+        elif action == self.actions.drop:
+            if not fwd_cell and self.carrying:
+                self.grid.set(*fwd_pos, self.carrying)
+                self.carrying.cur_pos = fwd_pos
+                self.carrying = None
+
+        # Toggle/activate an object
+        elif action == self.actions.toggle:
+            if fwd_cell:
+                fwd_cell.toggle(self, fwd_pos)
+
+        # Done action (not used by default)
+        elif action == self.actions.done:
+            pass
+
+        else:
+            assert False, "unknown action"
+
+        if self.step_count >= self.max_steps:
+            done = True
+
+        obs = self.gen_obs()
+
+        info = dict()
+        # ==========================================================================================
+
         reward = 0
 
         obs["collected"] = -1
@@ -164,7 +237,7 @@ class MultiObjectEGO(MultiObject):
     in another room
     """
 
-    def __init__(self, *args, room_size=14, **kwargs):
+    def __init__(self, *args, room_size=10, **kwargs):
         self.agent_view_size = agent_view_size = (room_size - 3) * 2 + 1
         super().__init__(*args, agent_view_size = agent_view_size, room_size=room_size, **kwargs)
 
