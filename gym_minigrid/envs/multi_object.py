@@ -19,15 +19,19 @@ class MultiObject(RoomGrid):
                  full_task=True,
                  room_size=10,
                  see_through_walls=True,
-                 task_size=8,
-                 num_tasks=1,
+                 task_size=6,
+                 num_tasks=3,
                  task_id=1,
                  reward_pickup=False,
+                 task_type=0,
+                 extra_info=True,
                  **kwargs
                  ):
         global OBJ_TYPES
 
         self.full_task = full_task
+        self._task_type = task_type
+        self._extra_info = extra_info
         self._randPos = self._rand_pos
         self._carrying = None
         self._task_size = task_size
@@ -45,7 +49,7 @@ class MultiObject(RoomGrid):
 
         self._collected_obj = list()
         self._available_obj = list([False] * self._num_obj)
-        self._obj_pos = list()
+        self._obj_pos = list([np.array([-1, -1]) for _ in range(self._num_obj)])
         self._crt_task = None
         self._fixed_task_id = None
 
@@ -99,15 +103,23 @@ class MultiObject(RoomGrid):
             new_objs += new_task_objs
         self._objs = new_objs
 
+    def add_extra_info(self, obs):
+        if self._extra_info:
+            obs["obj_pos"] = self._obj_pos
+            obs["agent"] = list(self.agent_pos) + [self.agent_dir]
+            obs["obj_ids"] = self._crt_task_ids
+        return obs
+
     def reset(self):
         self._crt_task = None
         self._collected_obj = list()
         self._available_obj = list([False] * self._num_obj)
-        self._obj_pos = list()
+        self._obj_pos = list([np.array([-1, -1]) for _ in range(self._num_obj)])
 
         obs = super().reset()
         obs["collected"] = -1
         obs["available_obj"] = self._available_obj
+        self.add_extra_info(obs)
 
         return obs
 
@@ -130,7 +142,7 @@ class MultiObject(RoomGrid):
             obj = task_obj[0](task_obj[1])
             obj._obj_id = st_i + i
             pos = self.place_obj(obj)
-            self._obj_pos.append(pos)
+            self._obj_pos[obj._obj_id] = pos
             self._available_obj[obj._obj_id] = True
 
         self.place_agent()
@@ -173,27 +185,27 @@ class MultiObject(RoomGrid):
 
         # Pick up an object
         elif action == self.actions.pickup:
-            if fwd_cell:  # and fwd_cell.can_pickup():
+            if fwd_cell and fwd_cell.type in ["box", "ball", "key", "lava", "door"]:
                 if self.carrying is None:
                     self.carrying = fwd_cell
                     self.carrying.cur_pos = np.array([-1, -1])
                     self.grid.set(*fwd_pos, None)
 
-        # Drop an object
-        elif action == self.actions.drop:
-            if not fwd_cell and self.carrying:
-                self.grid.set(*fwd_pos, self.carrying)
-                self.carrying.cur_pos = fwd_pos
-                self.carrying = None
-
-        # Toggle/activate an object
-        elif action == self.actions.toggle:
-            if fwd_cell:
-                fwd_cell.toggle(self, fwd_pos)
-
-        # Done action (not used by default)
-        elif action == self.actions.done:
-            pass
+        # # Drop an object
+        # elif action == self.actions.drop:
+        #     if not fwd_cell and self.carrying:
+        #         self.grid.set(*fwd_pos, self.carrying)
+        #         self.carrying.cur_pos = fwd_pos
+        #         self.carrying = None
+        #
+        # # Toggle/activate an object
+        # elif action == self.actions.toggle:
+        #     if fwd_cell:
+        #         fwd_cell.toggle(self, fwd_pos)
+        #
+        # # Done action (not used by default)
+        # elif action == self.actions.done:
+        #     pass
 
         else:
             assert False, "unknown action"
@@ -205,7 +217,7 @@ class MultiObject(RoomGrid):
 
         info = dict()
         # ==========================================================================================
-
+        obj_id = None
         reward = 0
 
         obs["collected"] = -1
@@ -220,14 +232,37 @@ class MultiObject(RoomGrid):
             if self._reward_pickup:
                 reward += self._partial_reward
 
-        if len(self._collected_obj) == self._task_size:
-            if self.full_task and self._collected_obj == self._crt_task_ids:
-                reward = +1
-                info["full_task_achieved"] = True
-            done = True
+        if self.full_task:
+            cobj = self._collected_obj
+
+            if self._task_type == 0:
+                if len(cobj) == self._task_size:
+                    if cobj == self._crt_task_ids:
+                        reward = 1
+                        info["full_task_achieved"] = True
+                    done = True
+            elif self._task_type == 1:
+                # first half are positive the rest are negative
+                if obj_id is not None:
+                    htsize = self._task_size // 2
+                    otsize = self._task_size - htsize
+                    taskids = self._crt_task_ids
+                    if obj_id in taskids[-htsize:]:
+                        reward = -1
+                        info["full_task_achieved"] = False
+                        done = True
+                    elif len(cobj) == otsize:
+                        reward = 1
+                        info["full_task_achieved"] = True
+                        done = True
+                    else:
+                        # Still collecting objects
+                        pass
+            else:
+                raise NotImplementedError
 
         obs["available_obj"] = self._available_obj
-
+        self.add_extra_info(obs)
         return obs, reward, done, info
 
 
